@@ -225,9 +225,7 @@ OutletController.prototype.fetchOutlets = function() {
     } else {
       endpoints = JSON.parse(body);
       endpoints.forEach(function(outlet) {
-        if (outlet.type === "connected-outlet") {
-          _this.addOutlet(outlet);
-        }
+        _this.addOutlet(outlet);
       });
     }
   });

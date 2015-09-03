@@ -103,10 +103,8 @@ app.use(function(err, req, res, next) {
 
 
 function createWebhook() {
-  console.log('createWebhook called');
   var url = urljoin(process.env.URL, 'webhook');
   mbedConnector.createWebhook(process.env.MDS_DOMAIN, url, function(error, response, body) {
-    console.log('createWebhook done');
     if (error || (response && response.statusCode >= 400)) {
       console.error('webhook registration failed. retrying in 1 second');
       setTimeout(createWebhook, 1000);
