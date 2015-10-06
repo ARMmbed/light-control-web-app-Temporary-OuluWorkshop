@@ -28,32 +28,13 @@ router.get("/", function(req, res, next) {
 
 router.put("/webhook", function(req, res, next) {
   console.log('/webhook hit');
-  console.log(req.body);
 
-  var outletController = req.app.get('outletController');
-  var outlets = [];
-
-  if (req.body.registrations) {
-    outlets = outlets.concat(req.body.registrations);
-  }
-  
-  if (req.body['reg-updates']) {
-    outlets = outlets.concat(req.body['reg-updates']);
+  if (req.body) {
+    var mbedConnector = req.app.get('mbedConnector');
+    console.log(req.body);
+    mbedConnector.handleWebhook(req.body);
   }
 
-  outlets.forEach(function(outlet) {
-    var outletFormatted = {
-      name: outlet.ep,
-      type: outlet.ept
-    };
-    
-    outletController.addOutlet(outletFormatted);
-  });
-
-  if (req.body["async-responses"]) {
-    outletController.handleAsyncResponses(req.body['async-responses']);
-  }
-  
   res.sendStatus(200);
 });
 

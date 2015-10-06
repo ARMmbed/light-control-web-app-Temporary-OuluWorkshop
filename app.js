@@ -19,7 +19,6 @@ require('dotenv').load();
 var express = require('express');
 var exphbs = require('express-handlebars');
 var path = require('path');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -55,13 +54,12 @@ var mbedConnector = new MbedConnector(process.env.MDS_HOST, credentials);
 var outletController = new OutletController(mbedConnector, io);
 
 app.set('outletController', outletController);
+app.set('mbedConnector', mbedConnector);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.engine('.hbs', exphbs({defaultLayout: 'layout', extname: '.hbs'}));
 app.set('view engine', '.hbs');
-// uncomment after placing your favicon in /public
-//app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -79,21 +77,10 @@ app.use(function(req, res, next) {
 
 // error handlers
 
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next) {
-        res.status(err.status || 500);
-        res.render('error', {
-            message: err.message,
-            error: err
-        });
-    });
-}
 
-// production error handler
 // no stacktraces leaked to user
 app.use(function(err, req, res, next) {
+    console.log(err.stack);
     res.status(err.status || 500);
     res.render('error', {
         message: err.message,
@@ -101,11 +88,27 @@ app.use(function(err, req, res, next) {
     });
 });
 
+function handleNewAndUpdatedRegistrations(registrations) {
+  console.log('handling new/updated registrations', registrations);
+  registrations.forEach(function(outlet) {
+    var outletFormatted = {
+      name: outlet.ep,
+      type: outlet.ept
+    };
+    
+    outletController.addOutlet(outletFormatted);
+  });
+}
+
+mbedConnector.on('registrations', handleNewAndUpdatedRegistrations);
+mbedConnector.on('reg-updates', handleNewAndUpdatedRegistrations);
 
 function createWebhook() {
   var url = urljoin(process.env.URL, 'webhook');
-  mbedConnector.createWebhook(process.env.MDS_DOMAIN, url, function(error, response, body) {
-    if (error || (response && response.statusCode >= 400)) {
+  console.log('Creating webhook');
+  mbedConnector.createWebhook(process.env.MDS_DOMAIN, url, function(error, body) {
+    console.log('Create webhook cb', error, body);
+    if (error) {
       console.error('webhook registration failed. retrying in 1 second');
       setTimeout(createWebhook, 1000);
     } else {
@@ -122,14 +125,15 @@ function registerPreSubscription() {
     }
   ];
 
-  mbedConnector.registerPreSubscription(process.env.MDS_DOMAIN, preSubscriptionData, function(error, response, body) {
-    console.log(error + " " + response.statusCode, body);
-    if (error || (response && response.statusCode >= 400)) {
+  mbedConnector.registerPreSubscription(process.env.MDS_DOMAIN, preSubscriptionData, function(error, body) {
+    console.log(error, body);
+    if (error) {
       console.error('pre-subscription registration failed. retrying in 1 second');
       setTimeout(function() {
         registerPreSubscription();
       }, 1000);
     } else {
+      console.log('in app.js, fetching outlets');
       outletController.fetchOutlets();
     }
   });  

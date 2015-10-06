@@ -18,7 +18,6 @@
 var OutletController = function(mbedConnector, io) {
   this.mbedConnector = mbedConnector;
   this.outlets = {};
-  this.asyncCallbacks = {};
   this.sockets = [];
   this.retryDelay = 10000;
   this.maxRetryAttempts = 5;
@@ -73,8 +72,8 @@ OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
   }
 
   var _this = this;
-  this.mbedConnector.getResource(process.env.MDS_DOMAIN, outlet.name, "Test/0/E", function (error, response, body) {
-    if (error || response.statusCode >= 400) {
+  this.mbedConnector.getResource(process.env.MDS_DOMAIN, outlet.name, "Test/0/E", function (error, data) {
+    if (error) {
       attemptNumber++;
       if (attemptNumber > _this.maxRetryAttempts) {
         console.log('Failed to get outlet state after ' + _this.maxRetryAttempts + ', removing outlet');
@@ -86,30 +85,9 @@ OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
         }, _this.retryDelay);
       }
     } else {
-      try {
-        var obj = JSON.parse(body);
-        if (obj && obj["async-response-id"]) {
-          console.log('Waiting on async response for state');
-          console.log(obj);
-          _this.asyncCallbacks[obj["async-response-id"]] = function(body) {
-            if (body.status >= 400) {
-              console.log('Failed to get "' + outlet.name + '" state, removing outlet');
-        _this.removeOutlet(outlet);
-            } else {
-              var b = new Buffer(body.payload, 'base64');
-              outlet.state = parseInt(b.toString());
-              console.log('"' + outlet.name + '" state: ' + outlet.state);
-              _this.sendOutletsToClients();
-            }
-          };
-        } else {
-          outlet.state = parseInt(body);
-          console.log('Immediately setting "' + outlet.name + '" to ' + outlet.state);
-          _this.sendOutletsToClients();
-        }
-      } catch (e) {
-        console.log(e);
-      }
+      outlet.state = parseInt(data);
+      console.log('"' + outlet.name + '" state: ' + outlet.state);
+      _this.sendOutletsToClients();
     }
   }); 
 };
@@ -158,60 +136,20 @@ OutletController.prototype.toggleOutlet = function(outlet, socket) {
 
   var _this = this;
 
-  this.mbedConnector.putResource(process.env.MDS_DOMAIN, outlet.name, 'Test/0/E', outlet.targetState, function (error, response, body) {
-    if (error || response.statusCode >= 400) {
-      console.error('put failed');
-      if (error) {
-        console.error(error);
-      }
-
-      if (response) {
-        console.error(response.statusCode);
-      }
-
+  this.mbedConnector.putResource(process.env.MDS_DOMAIN, outlet.name, 'Test/0/E', outlet.targetState, function (error,  body) {
+    if (error) {
+      console.log('Put failed');
+      console.log(error);
       console.log('\t' + outlet.name + ': failed to update, removing from outlet list');
       _this.removeOutlet(outlet);
     } else {
-      try {
-        var obj = JSON.parse(body);
-        if (obj && obj["async-response-id"]) {
-          console.log('\t' + outlet.name + ': Sent toggle command, waiting on ' + obj['async-response-id']); 
-
-          _this.asyncCallbacks[obj["async-response-id"]] = function(body) {
-            console.log('\t' + outlet.name + ': ' + obj['async-response-id'] + ' received');
-            
-            if (body.status >= 400) {
-              console.log('\t' + outlet.name + ': PUT timed out, attempting to get outlet state');
-              _this.getOutletState(outlet);
-            } else {
-              outlet.state = outlet.targetState;
-              if (socket) {
-                _this.sendToAllClients('update-outlet-state', {
-                  name: outlet.name,
-                  state: outlet.state
-                });
-              }
-            }
-          };
-        } else {
-          console.log('\t' + outlet.name + ': Made a put, but no async returned'); 
-        }
-      } catch (e) {
-        console.log('\t' + outlet.name + ": Can't parse JSON");
+      outlet.state = outlet.targetState;
+      if (socket) {
+        _this.sendToAllClients('update-outlet-state', {
+          name: outlet.name,
+          state: outlet.state
+        });
       }
-    }
-  });
-};
-
-OutletController.prototype.handleAsyncResponses = function(responses) {
-  var _this = this;
-
-  responses.forEach(function(asyncResponse) {
-    if (_this.asyncCallbacks.hasOwnProperty(asyncResponse.id)) {
-      _this.asyncCallbacks[asyncResponse.id](asyncResponse);
-      delete _this.asyncCallbacks[asyncResponse.id];
-    } else {
-      console.log('Ignoring async-response: ' + asyncResponse.id);
     }
   });
 };
@@ -219,8 +157,8 @@ OutletController.prototype.handleAsyncResponses = function(responses) {
 OutletController.prototype.fetchOutlets = function() {
   var _this = this;
   console.log('Fetching outlets');
-  this.mbedConnector.getEndpoints(process.env.MDS_DOMAIN, function (error, response, body) {
-    if (error || response.statusCode >= 400) {
+  this.mbedConnector.getEndpoints(process.env.MDS_DOMAIN, function (error, body) {
+    if (error) {
       console.error('Get endpoints failed.');
     } else {
       endpoints = JSON.parse(body);
