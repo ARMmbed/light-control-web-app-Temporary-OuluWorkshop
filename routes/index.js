@@ -27,11 +27,8 @@ router.get("/", function(req, res, next) {
 });
 
 router.put("/webhook", function(req, res, next) {
-  console.log('/webhook hit');
-
   if (req.body) {
     var mbedConnector = req.app.get('mbedConnector');
-    console.log(req.body);
     mbedConnector.handleWebhook(req.body);
   }
 

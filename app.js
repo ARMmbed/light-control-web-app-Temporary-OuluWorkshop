@@ -22,6 +22,7 @@ var path = require('path');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var favicon = require('serve-favicon');
 
 var routes = require('./routes/index');
 
@@ -43,12 +44,13 @@ if (process.env.MDS_TOKEN) {
   // If env variables NSP_USERNAME and NSP_PASSWORD defined, use basic auth
   credentials.username = process.env.MDS_USERNAME;
   credentials.password = process.env.MDS_PASSWORD;
+  credentials.domain = process.env.MDS_DOMAIN;
 }
 
 http.listen(process.env.PORT || 3000, function(){
   console.log('listening on port', process.env.PORT || 3000);
+  createWebhook();
 });
-
 
 var mbedConnector = new MbedConnector(process.env.MDS_HOST, credentials);
 var outletController = new OutletController(mbedConnector, io);
@@ -65,7 +67,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use('/', routes);
 
 // catch 404 and forward to error handler
@@ -89,26 +91,37 @@ app.use(function(err, req, res, next) {
 });
 
 function handleNewAndUpdatedRegistrations(registrations) {
-  console.log('handling new/updated registrations', registrations);
+  console.log('handling new/updated registrations');
   registrations.forEach(function(outlet) {
-    var outletFormatted = {
-      name: outlet.ep,
-      type: outlet.ept
-    };
-    
-    outletController.addOutlet(outletFormatted);
+    if (outlet.ept === process.env.ENDPOINT_TYPE) {
+      var outletFormatted = {
+        name: outlet.ep,
+        type: outlet.ept
+      };
+      
+      outletController.addOutlet(outletFormatted);
+    } else {
+      console.log('Ignoring endpoint of type ', outlet.ept);
+    }
   });
 }
 
 mbedConnector.on('registrations', handleNewAndUpdatedRegistrations);
 mbedConnector.on('reg-updates', handleNewAndUpdatedRegistrations);
+mbedConnector.on('de-registrations', function(deregistrations) {
+  deregistrations.forEach(function(outletName) {
+    var outlet = outletController.getOutlet(outletName);
+    outletController.removeOutlet(outlet);
+  });
+});
 
 function createWebhook() {
   var url = urljoin(process.env.URL, 'webhook');
   console.log('Creating webhook');
-  mbedConnector.createWebhook(process.env.MDS_DOMAIN, url, function(error, body) {
-    console.log('Create webhook cb', error, body);
+  mbedConnector.createWebhook(url, function(error) {
+    console.log('Create webhook cb');
     if (error) {
+      console.log(error);
       console.error('webhook registration failed. retrying in 1 second');
       setTimeout(createWebhook, 1000);
     } else {
@@ -120,12 +133,12 @@ function createWebhook() {
 function registerPreSubscription() {
   var preSubscriptionData = [
     {
-      "endpoint-type": "connected-outlet",
-      "resource-path": [ "/Test/0/E" ]
+      "endpoint-type": process.env.ENDPOINT_TYPE,
+      "resource-path": [ process.env.ENDPOINT_RESOURCE ]
     }
   ];
 
-  mbedConnector.registerPreSubscription(process.env.MDS_DOMAIN, preSubscriptionData, function(error, body) {
+  mbedConnector.registerPreSubscription(preSubscriptionData, function(error, body) {
     console.log(error, body);
     if (error) {
       console.error('pre-subscription registration failed. retrying in 1 second');
@@ -138,8 +151,6 @@ function registerPreSubscription() {
     }
   });  
 }
-
-createWebhook();
 
 module.exports = {
     app: app,

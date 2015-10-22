@@ -16,10 +16,12 @@ Light Control uses [dotenv](https://github.com/motdotla/dotenv) for configuratio
 - URL - URL to the dashboard (including port if necessary, eg. mylightcontrol.com or mylightcontrol.com:4000)
 - PORT - Port to use for the dashboard (4000 is used by default if this is not specified).
 - MDS_HOST - URL to the mbed Device Server (mDS) instance/mbed Connector
-- MDS_DOMAIN - Domain being used in mbed Device Server (mDS) instance/mbed Connector
+- MDS_DOMAIN - Domain being used in mbed Device Server (mDS) instance
 - MDS_TOKEN - Token to use for mbed Connector authentication (not needed if using mDS basic auth)
 - MDS_USERNAME - mDS basic auth username (not needed if using token authentication)
 - MDS_PASSWORD - mDS basic auth password (not needed if using token authentication)
+- ENDPOINT_TYPE - Endpoint type of the connected outlets
+- ENDPOINT_RESOURCE - Path to the endpoint's resource linked to the relay state
 
 ### Running the App
 

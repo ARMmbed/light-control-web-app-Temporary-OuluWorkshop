@@ -72,7 +72,7 @@ OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
   }
 
   var _this = this;
-  this.mbedConnector.getResource(process.env.MDS_DOMAIN, outlet.name, "Test/0/E", function (error, data) {
+  this.mbedConnector.getResource(outlet.name, process.env.ENDPOINT_RESOURCE, function (error, data) {
     if (error) {
       attemptNumber++;
       if (attemptNumber > _this.maxRetryAttempts) {
@@ -136,7 +136,7 @@ OutletController.prototype.toggleOutlet = function(outlet, socket) {
 
   var _this = this;
 
-  this.mbedConnector.putResource(process.env.MDS_DOMAIN, outlet.name, 'Test/0/E', outlet.targetState, function (error,  body) {
+  this.mbedConnector.putResource(outlet.name, process.env.ENDPOINT_RESOURCE, outlet.targetState, function (error,  body) {
     if (error) {
       console.log('Put failed');
       console.log(error);
@@ -157,7 +157,7 @@ OutletController.prototype.toggleOutlet = function(outlet, socket) {
 OutletController.prototype.fetchOutlets = function() {
   var _this = this;
   console.log('Fetching outlets');
-  this.mbedConnector.getEndpoints(process.env.MDS_DOMAIN, function (error, body) {
+  this.mbedConnector.getEndpoints(function (error, body) {
     if (error) {
       console.error('Get endpoints failed.');
     } else {
