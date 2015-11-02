@@ -21,14 +21,13 @@ $(function() {
 
   var createSwitchHtml = function(outlet) {
     var htmlStr = '<div class="switch">';
-    htmlStr += '<input id="' + outlet.name + '-switch" class="outlet-switch" type="checkbox"';
+    htmlStr += '<button id="' + outlet.name + '-switch" class="outlet-switch';
     
     if (outlet.state === 1) {
-      htmlStr += ' checked="checked"';
+      htmlStr += ' checked';
     }
     
-    htmlStr += '><label for="' + outlet.name + '-switch"></label>';
-    htmlStr += '</div>';
+    htmlStr += '"></button></div>';
 
     return htmlStr;
   };

@@ -15,9 +15,25 @@
  * limitations under the License.
  */
 
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+
 .switch {
   margin-bottom: 0;
   display: inline-block;
+}
+
+.margin {
+  margin: 1rem auto;
+}
+
+.blueband {
+  background-color: #159ab5;
+}
+
+.blueband h1 {
+  color: #fff;
 }
 
 .outlet {
@@ -28,18 +44,31 @@
 }
 
 .outlet h3 {
-  color: #FFF;
+  color: #fff;
   margin: 0;
+  line-height: 78px;
 }
 
-.switch input.outlet-switch {
+.spinner {
+  line-height: 78px;
+}
+
+.switch .outlet-switch {
+  background-image: url('/img/lightbulb_off.png');
+  background-size: 77px 78px;
   margin-bottom: 0;
   display: block;
+  width: 77px;
+  height: 78px;
+}
+
+.switch .outlet-switch.checked {
+  background-image: url('/img/lightbulb_on.png');
 }
 
 .row .row.outlet {
-  padding: 0.5rem;
-  background-color: #0084AB;
+  padding: 0.5rem 0;
+  background-color: #0084ab;
   border-radius: 10px;
   margin-top: 1rem;
 }
