@@ -17,6 +17,7 @@
 
 .switch {
   margin-bottom: 0;
+  display: inline-block;
 }
 
 .outlet {
@@ -26,15 +27,19 @@
   -o-transition: background 5s;
 }
 
+.outlet h3 {
+  color: #FFF;
+  margin: 0;
+}
+
 .switch input.outlet-switch {
   margin-bottom: 0;
   display: block;
 }
 
-.panel, .panel.callout {
-  padding: 0.5rem;
-}
-
 .row .row.outlet {
-  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #0084AB;
+  border-radius: 10px;
+  margin-top: 1rem;
 }

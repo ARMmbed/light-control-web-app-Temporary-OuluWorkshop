@@ -91,9 +91,12 @@ $(function() {
   };    
 
   var addOutlet = function(outlet) {
-    var htmlStr = '<div id="' + outlet.name + '-row" class="row outlet panel callout">';
-    htmlStr += '<div class="small-8 columns">' + outlet.name + '</div>';
-    htmlStr += '<div class="small-4 columns state-area">';
+    var newName = outlet.name.replace(/-/g, " ");
+    newName = newName.charAt(0).toUpperCase() + newName.slice(1);
+
+    var htmlStr = '<div id="' + outlet.name + '-row" class="row outlet callout">';
+    htmlStr += '<div class="small-8 columns"><h3>' + newName + '</h3></div>';
+    htmlStr += '<div class="small-4 columns state-area text-center">';
     
     htmlStr += '</div></div>';
 
