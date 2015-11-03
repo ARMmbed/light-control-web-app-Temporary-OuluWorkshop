@@ -66,6 +66,32 @@ OutletController.prototype.sendOutletsToClients = function() {
   this.sendToAllClients('outlets', { outlets: allOutlets });
 };
 
+OutletController.prototype.getOutletName = function(outlet, attemptNumber) {
+  if (!attemptNumber) {
+    attemptNumber = 0;
+  }
+
+  var _this = this;
+  this.mbedConnector.getResource(outlet.name, 'Test/0/N', function (error, data) {
+    if (error) {
+      attemptNumber++;
+      if (attemptNumber > _this.maxRetryAttempts) {
+        console.log('Failed to get outlet name after ' + _this.maxRetryAttempts + ', removing outlet');
+        _this.removeOutlet(outlet);
+      } else {
+        console.error('Failed to get outlet name, retry attempt ' + attemptNumber);
+        setTimeout(function() {
+          _this.getOutletName(outlet, attemptNumber);
+        }, _this.retryDelay);
+      }
+    } else {
+      outlet.printName = data;
+      console.log('"' + outlet.name + '" printName: ' + outlet.printName);
+      _this.getOutletState(outlet);
+    }
+  }); 
+};
+
 OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
   if (!attemptNumber) {
     attemptNumber = 0;
@@ -112,7 +138,7 @@ OutletController.prototype.addOutlet = function(outlet) {
   }
 
   this.outlets[outlet.name] = outlet;
-  this.getOutletState(outlet);
+  this.getOutletName(outlet);
 };
 
 OutletController.prototype.toggleOutlet = function(outlet, socket) {
@@ -131,6 +157,7 @@ OutletController.prototype.toggleOutlet = function(outlet, socket) {
 
   this.sendToAllClients('update-outlet-state', {
     name: outlet.name,
+    printName: outlet.printName,
     state: -1
   });
 
@@ -147,6 +174,7 @@ OutletController.prototype.toggleOutlet = function(outlet, socket) {
       if (socket) {
         _this.sendToAllClients('update-outlet-state', {
           name: outlet.name,
+          printName: outlet.printName,
           state: outlet.state
         });
       }

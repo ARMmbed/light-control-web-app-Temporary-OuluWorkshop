@@ -109,6 +109,7 @@ function handleNewAndUpdatedRegistrations(registrations) {
 mbedConnector.on('registrations', handleNewAndUpdatedRegistrations);
 mbedConnector.on('reg-updates', handleNewAndUpdatedRegistrations);
 mbedConnector.on('de-registrations', function(deregistrations) {
+  console.log('received de-registrations', deregistrations);
   deregistrations.forEach(function(outletName) {
     var outlet = outletController.getOutlet(outletName);
     outletController.removeOutlet(outlet);

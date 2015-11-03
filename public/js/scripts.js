@@ -36,7 +36,7 @@ $(function() {
     $('#' + outlet.name + '-row .state-area').append(createSwitchHtml(outlet));
     
     $('#' + outlet.name + '-switch').click(function() {
-      var state = this.checked ? 1 : 0;
+      var state = $(this).hasClass('checked') ? 1 : 0;
 
       socket.emit('toggle-outlet', {
         name: outlet.name,
@@ -47,7 +47,11 @@ $(function() {
 
   
   var updateSwitch = function(outlet) {
-    $('#' + outlet.name + '-switch').prop('checked', outlet.state);
+    if (outlet.state) {
+      $('#' + outlet.name + '-switch').addClass('checked');
+    } else {
+      $('#' + outlet.name + '-switch').removeClass('checked');
+    }
   };
  
   var createSpinnerHtml = function(outlet) {
@@ -90,11 +94,8 @@ $(function() {
   };    
 
   var addOutlet = function(outlet) {
-    var newName = outlet.name.replace(/-/g, " ");
-    newName = newName.charAt(0).toUpperCase() + newName.slice(1);
-
     var htmlStr = '<div id="' + outlet.name + '-row" class="row outlet callout">';
-    htmlStr += '<div class="small-8 columns"><h3>' + newName + '</h3></div>';
+    htmlStr += '<div class="small-8 columns"><h3>' + outlet.printName + '</h3></div>';
     htmlStr += '<div class="small-4 columns state-area text-center">';
     
     htmlStr += '</div></div>';
@@ -159,12 +160,13 @@ $(function() {
   });
  
 	socket.on('add-outlets', function(data) {
+    var _this = this;
 		console.log('add-outlets:', data);
 
     data.outlets.forEach(function(outlet) {
       if (outlets[outlet.name]) {
         outlets[outlet.name].state = outlet.state;
-        $('#' + outlet.name + '-switch').checked = outlet.state;
+        _this.updateSwitch(outlet);
       } else {
         addOutlet(outlet);
       }
