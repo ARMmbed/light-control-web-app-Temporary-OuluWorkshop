@@ -23,14 +23,14 @@ var OutletController = function(mbedConnector, io) {
   this.maxRetryAttempts = 5;
 
   var _this = this;
- 
+
   io.on('connection', function(socket){
     console.log('socket connected');
     _this.sockets.push(socket);
 
     socket.emit('outlets', {
       outlets: _this.getOutlets()
-    });  
+    });
 
     socket.on('toggle-outlet', function(data) {
       var outlet = _this.getOutlet(data.name);
@@ -89,7 +89,7 @@ OutletController.prototype.getOutletName = function(outlet, attemptNumber) {
       console.log('"' + outlet.name + '" printName: ' + outlet.printName);
       _this.getOutletState(outlet);
     }
-  }); 
+  });
 };
 
 OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
@@ -115,7 +115,7 @@ OutletController.prototype.getOutletState = function(outlet, attemptNumber) {
       console.log('"' + outlet.name + '" state: ' + outlet.state);
       _this.sendOutletsToClients();
     }
-  }); 
+  });
 };
 
 OutletController.prototype.removeOutlet = function(outlet) {
@@ -189,8 +189,7 @@ OutletController.prototype.fetchOutlets = function() {
     if (error) {
       console.error('Get endpoints failed.');
     } else {
-      endpoints = JSON.parse(body);
-      endpoints.forEach(function(outlet) {
+      body.forEach(function(outlet) {
         _this.addOutlet(outlet);
       });
     }
@@ -201,7 +200,7 @@ OutletController.prototype.getOutlets = function() {
   var _outlets = this.outlets;
   var keys = Object.keys(_outlets);
   var ret = [];
-  
+
   keys.forEach(function(key) {
     if (_outlets[key].state !== -1) {
       ret.push(_outlets[key]);

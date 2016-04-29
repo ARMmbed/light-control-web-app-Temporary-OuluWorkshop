@@ -20,20 +20,10 @@ var router = express.Router();
 
 router.get("/", function(req, res, next) {
   var outletController = req.app.get('outletController');
-  
+
   return res.render("index", {
     outlets: outletController.getOutlets()
   });
-});
-
-router.put("/webhook", function(req, res, next) {
-  if (req.body) {
-    console.log(req.body);
-    var mbedConnector = req.app.get('mbedConnector');
-    mbedConnector.handleWebhook(req.body);
-  }
-
-  res.sendStatus(200);
 });
 
 module.exports = router;
