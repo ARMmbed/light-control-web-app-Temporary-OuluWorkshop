@@ -22,6 +22,7 @@ Light Control uses [dotenv](https://github.com/motdotla/dotenv) for configuratio
 - MDS_PASSWORD - mDS basic auth password (not needed if using token authentication)
 - ENDPOINT_TYPE - Endpoint type of the connected outlets
 - ENDPOINT_RESOURCE - Path to the endpoint's resource linked to the relay state
+- ENDPOINT_NAME_RESOURCE - Path to the endpoint's resource that gives its name
 
 ### Running the App
 

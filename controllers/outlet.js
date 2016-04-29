@@ -72,7 +72,7 @@ OutletController.prototype.getOutletName = function(outlet, attemptNumber) {
   }
 
   var _this = this;
-  this.mbedConnector.getResource(outlet.name, 'Test/0/N', function (error, data) {
+  this.mbedConnector.getResource(outlet.name, process.env.ENDPOINT_NAME_RESOURCE, function (error, data) {
     if (error) {
       attemptNumber++;
       if (attemptNumber > _this.maxRetryAttempts) {
