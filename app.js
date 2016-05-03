@@ -47,13 +47,21 @@ if (process.env.MDS_TOKEN) {
   credentials.domain = process.env.MDS_DOMAIN;
 }
 
-http.listen(process.env.PORT || 3000, function(){
-  console.log('listening on port', process.env.PORT || 3000);
-  createWebhook();
-});
-
 var mbedConnector = new MbedConnector(process.env.MDS_HOST, credentials);
 var outletController = new OutletController(mbedConnector, io);
+
+http.listen(process.env.PORT || 3000, function(){
+  console.log('listening on port', process.env.PORT || 3000);
+  console.log("Starting long polling");
+  mbedConnector.startLongPolling(function(error) {
+    if (error) {
+      console.log("Starting long polling failed");
+      console.log(error);
+    } else {
+      registerPreSubscription();
+    }
+  });
+});
 
 app.set('outletController', outletController);
 app.set('mbedConnector', mbedConnector);
@@ -98,7 +106,7 @@ function handleNewAndUpdatedRegistrations(registrations) {
         name: outlet.ep,
         type: outlet.ept
       };
-      
+
       outletController.addOutlet(outletFormatted);
     } else {
       console.log('Ignoring endpoint of type ', outlet.ept);
@@ -116,21 +124,6 @@ mbedConnector.on('de-registrations', function(deregistrations) {
   });
 });
 
-function createWebhook() {
-  var url = urljoin(process.env.URL, 'webhook');
-  console.log('Creating webhook');
-  mbedConnector.createWebhook(url, function(error) {
-    console.log('Create webhook cb');
-    if (error) {
-      console.log(error);
-      console.error('webhook registration failed. retrying in 1 second');
-      setTimeout(createWebhook, 1000);
-    } else {
-      registerPreSubscription();
-    }
-  });
-}
-
 function registerPreSubscription() {
   var preSubscriptionData = [
     {
@@ -140,7 +133,6 @@ function registerPreSubscription() {
   ];
 
   mbedConnector.registerPreSubscription(preSubscriptionData, function(error, body) {
-    console.log(error, body);
     if (error) {
       console.error('pre-subscription registration failed. retrying in 1 second');
       setTimeout(function() {
@@ -150,7 +142,7 @@ function registerPreSubscription() {
       console.log('in app.js, fetching outlets');
       outletController.fetchOutlets();
     }
-  });  
+  });
 }
 
 module.exports = {
